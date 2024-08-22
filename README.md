@@ -1,1 +1,1 @@
-# edot-shop-service
+# edot-shop-services
