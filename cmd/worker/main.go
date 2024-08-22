@@ -9,6 +9,7 @@ import (
 
 	"edot-monorepo/services/shop-service/internal/config"
 	"edot-monorepo/services/shop-service/internal/delivery/messaging"
+	repository "edot-monorepo/services/shop-service/internal/repository/gorm"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -17,6 +18,7 @@ import (
 func main() {
 	viperConfig := config.NewViper()
 	logger := config.NewLogger(viperConfig)
+
 	logger.Info("Starting worker service")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -40,8 +42,13 @@ func main() {
 }
 
 func RunShopConsumer(logger *logrus.Logger, viperConfig *viper.Viper, ctx context.Context) {
-	logger.Info("setup address consumer")
-	addressConsumer := config.NewKafkaConsumer(viperConfig, logger)
-	addressHandler := messaging.NewShopConsumer(logger)
-	messaging.ConsumeTopic(ctx, addressConsumer, "addresses", logger, addressHandler.Consume)
+	logger.Info("setup shop consumer")
+	db := config.NewDatabase(viperConfig, logger)
+	validate := config.NewValidator(viperConfig)
+	shopRepo := repository.NewShopRepository(logger)
+	consumer := config.NewKafkaConsumer(viperConfig, logger)
+	warehouseHandler := messaging.NewShopConsumer(db, validate, shopRepo, logger)
+
+	messaging.ConsumeTopic(ctx, consumer, "warehouse_created", logger, warehouseHandler.ConsumeWarehouseCreated)
+
 }

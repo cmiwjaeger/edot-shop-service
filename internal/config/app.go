@@ -3,9 +3,12 @@ package config
 import (
 	"edot-monorepo/services/shop-service/internal/delivery/http/controller"
 	"edot-monorepo/services/shop-service/internal/delivery/http/route"
+	"edot-monorepo/services/shop-service/internal/gateway/messaging"
 	repository "edot-monorepo/services/shop-service/internal/repository/gorm"
 	"edot-monorepo/services/shop-service/internal/usecase"
+	"edot-monorepo/shared/events"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
@@ -19,15 +22,23 @@ type BootstrapConfig struct {
 	Log      *logrus.Logger
 	Validate *validator.Validate
 	Config   *viper.Viper
+	Producer *kafka.Producer
 }
 
 func Bootstrap(config *BootstrapConfig) {
 
-	shopRepository := repository.NewShopRepository(config.Log)
-	shopBaseUseCase := usecase.NewShopUseCase(config.DB, config.Log, shopRepository, config.Validate)
-	shopCreateUseCase := usecase.NewShopCreateUseCase(shopBaseUseCase)
+	shopCreatedProducer := messaging.NewShopProducer[*events.ShopCreatedEvent]("shop_created", config.Producer, config.Log)
+	shopWhAssignedProducer := messaging.NewShopProducer[*events.ShopWarehouseAssignedEvent]("shop_assign_warehouse", config.Producer, config.Log)
 
-	shopController := controller.NewShopController(shopCreateUseCase, config.Log, config.Validate)
+	shopRepository := repository.NewShopRepository(config.Log)
+	shopWhRepository := repository.NewShopWarehouseRepository(config.Log)
+
+	shopBaseUseCase := usecase.NewShopUseCase(config.DB, config.Log, shopRepository, config.Validate)
+	shopCreateUseCase := usecase.NewShopCreateUseCase(shopBaseUseCase, shopCreatedProducer)
+
+	shopAssignUseCase := usecase.NewShopAssignUseCase(config.DB, config.Log, shopWhRepository, config.Validate, shopWhAssignedProducer)
+
+	shopController := controller.NewShopController(shopCreateUseCase, shopAssignUseCase, config.Log, config.Validate)
 
 	routeConfig := route.RouteConfig{
 		App:            config.App,

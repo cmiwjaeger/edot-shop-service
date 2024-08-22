@@ -1,10 +1,10 @@
 {
   "app": {
-    "name": "edot-order-service"
+    "name": "edot-shop-service"
   },
   "web": {
     "prefork": false,
-    "port": 3100
+    "port": 3104
   },
   "log": {
     "level": 7
@@ -13,7 +13,7 @@
     "username": "myuser",
     "password": "mypassword",
     "host": "127.0.0.1",
-    "port": "5433",
+    "port": "5437",
     "name": "edot_shop_db",
     "pool": {
       "iddle": 10,
@@ -23,7 +23,7 @@
   },
   "kafka": {
     "bootstrap": {
-      "servers": "localhost:9093"
+      "servers": "localhost:9092"
     },
     "group": {
       "id": "edot_shop_service"

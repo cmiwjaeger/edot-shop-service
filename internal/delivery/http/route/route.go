@@ -18,7 +18,8 @@ func (c *RouteConfig) Setup() {
 	c.SetupAuthRoute()
 }
 func (c *RouteConfig) SetupGuestRoute() {
-	c.App.Post("/api/create", c.ShopController.Create)
+	c.App.Post("/api/shop", c.ShopController.Create)
+	c.App.Post("/api/shop/assign-warehouse", c.ShopController.AssignWarehouse)
 
 }
 

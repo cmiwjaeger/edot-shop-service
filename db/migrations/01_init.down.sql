@@ -1,1 +1,3 @@
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS shop_warehouses;
+DROP TABLE IF EXISTS warehouses;
+DROP TABLE IF EXISTS shops;

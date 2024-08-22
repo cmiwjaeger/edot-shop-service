@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ConsumerHandler func(message *kafka.Message) error
+type ConsumerHandler func(message *kafka.Message, ctx context.Context) error
 
 func ConsumeTopic(ctx context.Context, consumer *kafka.Consumer, topic string, log *logrus.Logger, handler ConsumerHandler) {
 	err := consumer.Subscribe(topic, nil)
@@ -25,7 +25,7 @@ func ConsumeTopic(ctx context.Context, consumer *kafka.Consumer, topic string, l
 		default:
 			message, err := consumer.ReadMessage(time.Second)
 			if err == nil {
-				err := handler(message)
+				err := handler(message, ctx)
 				if err != nil {
 					log.Errorf("Failed to process message: %v", err)
 				} else {
