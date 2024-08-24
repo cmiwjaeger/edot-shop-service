@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"edot-monorepo/services/shop-service/internal/entity"
-	"edot-monorepo/services/shop-service/internal/gateway/messaging"
 	"edot-monorepo/services/shop-service/internal/model"
 	"edot-monorepo/services/shop-service/internal/model/converter"
 
@@ -12,13 +11,11 @@ import (
 
 type ShopCreateUseCase struct {
 	*ShopBaseUseCase
-	ShopCreatedProducer *messaging.ShopProducer[model.Event]
 }
 
-func NewShopCreateUseCase(shopBaseUseCase *ShopBaseUseCase, ShopCreatedProducer *messaging.ShopProducer[model.Event]) *ShopCreateUseCase {
+func NewShopCreateUseCase(shopBaseUseCase *ShopBaseUseCase) *ShopCreateUseCase {
 	return &ShopCreateUseCase{
-		ShopBaseUseCase:     shopBaseUseCase,
-		ShopCreatedProducer: ShopCreatedProducer,
+		shopBaseUseCase,
 	}
 }
 
@@ -47,7 +44,7 @@ func (c *ShopCreateUseCase) Exec(ctx context.Context, request *model.ShopCreateR
 	}
 
 	event := converter.ShopToEvent(shop)
-	if err := c.ShopCreatedProducer.SendAsync(event); err != nil {
+	if err = c.Producer.Produce(ctx, "shop_created", event); err != nil {
 		c.Log.WithError(err).Error("error publishing contact")
 		return nil, fiber.ErrInternalServerError
 	}

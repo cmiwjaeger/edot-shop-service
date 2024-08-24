@@ -15,20 +15,20 @@ import (
 )
 
 type ShopAssignUseCase struct {
-	DB           *gorm.DB
-	Log          *logrus.Logger
-	ShopWhRepo   *repository.ShopWarehouseRepository
-	Validate     *validator.Validate
-	ShopProducer *messaging.ShopProducer[model.Event]
+	DB         *gorm.DB
+	Log        *logrus.Logger
+	ShopWhRepo *repository.ShopWarehouseRepository
+	Validate   *validator.Validate
+	Producer   *messaging.Producer
 }
 
-func NewShopAssignUseCase(DB *gorm.DB, Log *logrus.Logger, ShopWhRepo *repository.ShopWarehouseRepository, Validate *validator.Validate, ShopProducer *messaging.ShopProducer[model.Event]) *ShopAssignUseCase {
+func NewShopAssignUseCase(DB *gorm.DB, Log *logrus.Logger, ShopWhRepo *repository.ShopWarehouseRepository, Validate *validator.Validate, producer *messaging.Producer) *ShopAssignUseCase {
 	return &ShopAssignUseCase{
-		DB:           DB,
-		Log:          Log,
-		ShopWhRepo:   ShopWhRepo,
-		Validate:     Validate,
-		ShopProducer: ShopProducer,
+		DB:         DB,
+		Log:        Log,
+		ShopWhRepo: ShopWhRepo,
+		Validate:   Validate,
+		Producer:   producer,
 	}
 }
 
@@ -59,7 +59,7 @@ func (c *ShopAssignUseCase) Exec(ctx context.Context, request *model.ShopAssignW
 	}
 
 	event := converter.ShopWhToEvent(shopWh, assigned)
-	if err := c.ShopProducer.SendAsync(event); err != nil {
+	if err := c.Producer.Produce(ctx, "shop_created", event); err != nil {
 		c.Log.WithError(err).Error("error publishing contact")
 		return nil, fiber.ErrInternalServerError
 	}

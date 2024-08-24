@@ -3,29 +3,27 @@ package messaging
 import (
 	"context"
 	"edot-monorepo/services/shop-service/internal/entity"
-	repository "edot-monorepo/services/shop-service/internal/repository/gorm"
 	"edot-monorepo/shared/events"
+
 	"encoding/json"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-playground/validator/v10"
+	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
 type WarehouseConsumer struct {
-	DB             *gorm.DB
-	Validate       *validator.Validate
-	ShopRepository *repository.ShopRepository
-	Log            *logrus.Logger
+	Log       *logrus.Logger
+	DB        *gorm.DB
+	Validator *validator.Validate
 }
 
-func NewShopConsumer(db *gorm.DB, validate *validator.Validate, shopRepo *repository.ShopRepository, log *logrus.Logger) *WarehouseConsumer {
+func NewShopConsumer(log *logrus.Logger, db *gorm.DB, validate *validator.Validate) *WarehouseConsumer {
 	return &WarehouseConsumer{
-		DB:             db,
-		Validate:       validate,
-		ShopRepository: shopRepo,
-		Log:            log,
+		Log:       log,
+		DB:        db,
+		Validator: validate,
 	}
 }
 
@@ -45,6 +43,6 @@ func (c WarehouseConsumer) ConsumeWarehouseCreated(message *kafka.Message, ctx c
 		c.Log.WithError(err).Error("error insert into db")
 	}
 
-	c.Log.Infof("Received topic warehouse with event: %v from partition %d", event, message.TopicPartition.Partition)
+	c.Log.Infof("Received topic warehouse with event: %v from partition %s", event, message.Topic)
 	return nil
 }
